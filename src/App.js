@@ -19,20 +19,28 @@ function Popular(props) {
 };
 
 function Article(props) {
+    const Wraper = wraper(props);
+
     return (
-        <div className="item item-article">
-            <h3><a href="#">{props.title}</a></h3>
-            <p className="views">Прочтений: {props.views}</p>
-        </div>
+        <Wraper>
+            <div className="item item-article">
+                <h3><a href="#">{props.title}</a></h3>
+                <p className="views">Прочтений: {props.views}</p>
+            </div>
+        </Wraper>
     )
 };
 
 function Video(props) {
+    const Wraper = wraper(props);
+
     return (
-        <div className="item item-video">
-            <iframe src={props.url} frameBorder="0" allow="autoplay; encrypted-media" allowFullScreen title={props.url}></iframe>
-            <p className="views">Просмотров: {props.views}</p>
-        </div>
+        <Wraper>
+            <div className="item item-video">
+                <iframe src={props.url} frameBorder="0" allow="autoplay; encrypted-media" allowFullScreen title={props.url}></iframe>
+                <p className="views">Просмотров: {props.views}</p>
+            </div>
+        </Wraper>
     )
 };
 
@@ -41,12 +49,12 @@ function List(props) {
         switch (item.type) {
             case 'video':
                 return (
-                    <Hoc item={item} Component={Video} />
+                    <Video {...item} />
                 );
 
             case 'article':
                 return (
-                    <Hoc item={item} Component={Article} />
+                    <Article {...item} />
                 );
             default:
                 return false;
@@ -88,31 +96,36 @@ export default function App() {
         },
     ]);
 
+    const ListUpgrade = UpgradeList(List, list,  New, Popular)
+
     return (
-        <List list={list} />
+        <ListUpgrade />
     );
 }
 
-function Hoc({item, Component}) {
-    function upgradePopular() {
-        if (item.views > 1000) {
-            return(
-                <Popular>
-                    <Component {...item} />
-                </Popular>
-            )
-        };
-        if (item.views < 100) {
-            return (
-                <New>
-                    <Component {...item} />
-                </New>
-            );
-        }
-        return(
-            <Component {...item} />
-        );
+function UpgradeList(Component, list, New, Popular) {
+    list.map((el) => {
+        if (el.views > 1000) el.wraper = Popular;
+        if (el.views < 100) el.wraper = New;
+        return el;
+    });
+    
+    function upgrade() {
+        return <Component list={list} />
     }
 
-    return upgradePopular();
+    return upgrade;
+}
+
+function DumDum(props) {
+    return(
+        <div>
+            {props.children}
+        </div>
+    );
+}
+
+function wraper(obj) {
+    if (obj.hasOwnProperty('wraper')) return obj.wraper;
+    return DumDum;
 }
