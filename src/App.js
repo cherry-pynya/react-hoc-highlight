@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { nanoid } from 'nanoid'
 
 function New(props) {
     return (
@@ -19,42 +20,37 @@ function Popular(props) {
 };
 
 function Article(props) {
-    const Wraper = wraper(props);
-
     return (
-        <Wraper>
             <div className="item item-article">
                 <h3><a href="#">{props.title}</a></h3>
                 <p className="views">Прочтений: {props.views}</p>
             </div>
-        </Wraper>
     )
 };
 
 function Video(props) {
-    const Wraper = wraper(props);
-
     return (
-        <Wraper>
             <div className="item item-video">
                 <iframe src={props.url} frameBorder="0" allow="autoplay; encrypted-media" allowFullScreen title={props.url}></iframe>
                 <p className="views">Просмотров: {props.views}</p>
             </div>
-        </Wraper>
     )
 };
 
 function List(props) {
+    const PopularVideo = withHOC(Video);
+    const PopularArticle = withHOC(Article);
+
     return props.list.map(item => {
         switch (item.type) {
             case 'video':
                 return (
-                    <Video {...item} />
+                    <PopularVideo {...item} key={nanoid()} />
                 );
 
             case 'article':
                 return (
-                    <Article {...item} />
+                    <PopularArticle {...item} key={nanoid()} />
                 );
             default:
                 return false;
@@ -96,36 +92,26 @@ export default function App() {
         },
     ]);
 
-    const ListUpgrade = UpgradeList(List, list,  New, Popular)
-
     return (
-        <ListUpgrade />
+        <List list={list} />
     );
 }
 
-function UpgradeList(Component, list, New, Popular) {
-    list.map((el) => {
-        if (el.views > 1000) el.wraper = Popular;
-        if (el.views < 100) el.wraper = New;
-        return el;
-    });
-    
-    function upgrade() {
-        return <Component list={list} />
+function withHOC(Component) {
+    return (props) => {
+        if (props.views > 1000) {
+            return (
+                <Popular>
+                    <Component {...props} />
+                </Popular>
+            );
+        } else if (props.views < 100) {
+            return(
+                <New>
+                    <Component {...props} />
+                </New>
+            );
+        }
+        return <Component {...props} />;
     }
-
-    return upgrade;
-}
-
-function DumDum(props) {
-    return(
-        <div>
-            {props.children}
-        </div>
-    );
-}
-
-function wraper(obj) {
-    if (obj.hasOwnProperty('wraper')) return obj.wraper;
-    return DumDum;
 }
